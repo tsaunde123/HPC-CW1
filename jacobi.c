@@ -39,14 +39,14 @@ void parse_arguments(int argc, char *argv[]);
 
 // Run the Jacobi solver
 // Returns the number of iterations performed
-int run(double *A, double *b, double *x, double *xtmp)
+int run(float* restrict A, float* restrict b, float* restrict x, float* restrict xtmp)
 {
   int itr;
   int row, col;
-  double dot;
-  double diff;
-  double sqdiff;
-  double *ptrtmp;
+  float dot;
+  float diff;
+  float sqdiff;
+  float *ptrtmp;
 
   // Loop until converged or maximum iterations reached
   itr = 0;
@@ -58,9 +58,11 @@ int run(double *A, double *b, double *x, double *xtmp)
       dot = 0.0;
       for (col = 0; col < N; col++)
       {
-        if (row != col)
-          dot += A[row + col*N] * x[col];
+        //if (row != col)
+          dot += A[row*N + col] * x[col];
+
       }
+      dot -= A[row + row*N] * x[row];
       xtmp[row] = (b[row] - dot) / A[row + row*N];
     }
 
@@ -87,10 +89,10 @@ int main(int argc, char *argv[])
 {
   parse_arguments(argc, argv);
 
-  double *A    = malloc(N*N*sizeof(double));
-  double *b    = malloc(N*sizeof(double));
-  double *x    = malloc(N*sizeof(double));
-  double *xtmp = malloc(N*sizeof(double));
+  float *A    = malloc(N*N*sizeof(float));
+  float *b    = malloc(N*sizeof(float));
+  float *x    = malloc(N*sizeof(float));
+  float *xtmp = malloc(N*sizeof(float));
 
   printf(SEPARATOR);
   printf("Matrix size:            %dx%d\n", N, N);
@@ -104,15 +106,15 @@ int main(int argc, char *argv[])
   srand(SEED);
   for (int row = 0; row < N; row++)
   {
-    double rowsum = 0.0;
+    float rowsum = 0.0;
     for (int col = 0; col < N; col++)
     {
-      double value = rand()/(double)RAND_MAX;
-      A[row + col*N] = value;
+      float value = rand()/(float)RAND_MAX;
+      A[row*N + col] = value;
       rowsum += value;
     }
     A[row + row*N] += rowsum;
-    b[row] = rand()/(double)RAND_MAX;
+    b[row] = rand()/(float)RAND_MAX;
     x[row] = 0.0;
   }
 
@@ -128,7 +130,7 @@ int main(int argc, char *argv[])
     double tmp = 0.0;
     for (int col = 0; col < N; col++)
     {
-      tmp += A[row + col*N] * x[col];
+      tmp += A[row*N + col] * x[col];
     }
     tmp = b[row] - tmp;
     err += tmp*tmp;
